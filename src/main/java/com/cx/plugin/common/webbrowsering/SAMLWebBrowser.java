@@ -3,6 +3,7 @@ package com.cx.plugin.common.webbrowsering;
 
 import com.cx.plugin.common.events.EventBus;
 import com.cx.plugin.common.events.ISubscriber;
+import com.cx.plugin.common.exception.SamlException;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -30,13 +31,13 @@ public class SAMLWebBrowser extends Application implements ISubscriber, ISAMLWeb
     String url, content, ott, error;
 
 
-    public String BrowseForOtt(String samlURL, String clientName) throws Exception {
+    public String BrowseForOtt(String samlURL, String clientName) throws SamlException {
         UUID key = UUID.randomUUID();
         EventBus.subscribe(key, this);
         launch(getClass(), samlURL, key.toString(), clientName);
         EventBus.unsubsribe(key);
         if (hasErrors())
-            throw new Exception(error);
+            throw new SamlException(error);
         return ott;
     }
 

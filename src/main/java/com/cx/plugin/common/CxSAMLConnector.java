@@ -1,6 +1,7 @@
 package com.cx.plugin.common;
 
 import com.cx.plugin.common.cxservergateway.ICxServer;
+import com.cx.plugin.common.exception.SamlException;
 import com.cx.plugin.common.sdk.CxWSResponseLoginData;
 import com.cx.plugin.common.webbrowsering.ISAMLWebBrowser;
 
@@ -21,7 +22,7 @@ public class CxSAMLConnector {
         String ott = samlWebBrowser.BrowseForOtt(cxServer.getRestURL() + SAML_LOGIN_RELATIVE_PATH, clientName);
         CxWSResponseLoginData loginResult = cxServer.LoginWithToken(ott);
         if (!loginResult.isIsSuccesfull())
-            throw new Exception(loginResult.getErrorMessage());
+            throw new SamlException(loginResult.getErrorMessage());
         return loginResult.getSessionId();
     }
 

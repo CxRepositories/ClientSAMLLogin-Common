@@ -3,7 +3,7 @@ package com.cx.plugin.common.exception;
 /**
  * Created by tsahib on 11/23/2016.
  */
-public class SamlException extends Exception{
+public class SamlException extends Exception {
     public SamlException() {
     }
 

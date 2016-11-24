@@ -15,18 +15,18 @@ public class CxServer implements ICxServer {
 
     private static final QName SERVICE_NAME = new QName("http://Checkmarx.com/v7", "CxSDKWebService");
     private static URL WSDL_LOCATION = CxSDKWebService.class.getClassLoader().getResource("WEB-INF/CxSDKWebService.wsdl");
+    private static String PLUGIN_SDK = "Cxwebinterface/SDK/CxSDKWebService.asmx";
     private final CxSDKWebServiceSoap client;
 
-    String serverSoapUrl, pluginSDK, serverRestURL;
+    String serverSoapUrl,  serverRestURL;
 
-    public CxServer(String soapUrl, String pluginSDK, String restURL) {
+    public CxServer(String soapUrl,String restURL) {
         this.serverSoapUrl = soapUrl;
-        this.pluginSDK = pluginSDK;
         this.serverRestURL = restURL;
         CxSDKWebService service = new CxSDKWebService(WSDL_LOCATION, SERVICE_NAME);
         client = service.getCxSDKWebServiceSoap();
         BindingProvider bindingProvider = (BindingProvider) client;
-        bindingProvider.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, serverSoapUrl + pluginSDK);
+        bindingProvider.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, serverSoapUrl + PLUGIN_SDK);
     }
 
     public String getRestURL() {

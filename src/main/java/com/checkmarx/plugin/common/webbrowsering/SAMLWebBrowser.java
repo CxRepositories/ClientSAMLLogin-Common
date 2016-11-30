@@ -23,14 +23,16 @@ import java.util.UUID;
  */
 public class SAMLWebBrowser extends Application implements ISubscriber, ISAMLWebBrowser {
 
-    private static final String ERROR_QUERY_KEY = "Error",
-            SUCCESS_EVENT_NAME = "Success",
-            FAILURE_EVENT_NAME = "Failure";
+    private static final String ERROR_QUERY_KEY = "Error";
+    private static final String SUCCESS_EVENT_NAME = "Success";
+    private static final String FAILURE_EVENT_NAME = "Failure";
+    private WebEngine webEngine;
+    private String url;
+    private String content;
+    private String ott;
+    private String error;
 
-    WebEngine webEngine;
-    String url, content, ott, error;
-
-
+    @Override
     public String BrowseForOtt(String samlURL, String clientName) throws SamlException {
         UUID key = UUID.randomUUID();
         EventBus.subscribe(key, this);
@@ -44,7 +46,7 @@ public class SAMLWebBrowser extends Application implements ISubscriber, ISAMLWeb
     @Override
     public void start(Stage stage) throws Exception {
         List<String> params = getParameters().getRaw();
-        if (params.size() == 0) {
+        if (params.isEmpty()) {
             return;
         }
 
@@ -63,27 +65,29 @@ public class SAMLWebBrowser extends Application implements ISubscriber, ISAMLWeb
             public void changed(ObservableValue ov, Worker.State oldState, Worker.State newState) {
                 if (newState == Worker.State.SUCCEEDED) {
                     url = webEngine.getDocument().getDocumentURI();
-                    content = GetDocumentBody();
-                    CheckForErrors();
+                    content = getDocumentBody();
+                    checkForErrors();
                     if (!hasErrors())
-                        Extractott();
+                        extractOtt();
                 } else if (newState == Worker.State.FAILED) {
 
                     error = webEngine.getLoadWorker().getException().toString();
                 }
 
                 if (hasOtt() || hasErrors())
-                    Exit();
+                    exit();
             }
         };
     }
 
-    private void Extractott() {
-        if (!url.toLowerCase().contains("samlacs")) return;
+    private void extractOtt() {
+        if (!url.toLowerCase().contains("samlacs")) {
+            return;
+        }
         ott = content;
     }
 
-    private String GetDocumentBody() {
+    private String getDocumentBody() {
         try {
             return webEngine.getDocument().getElementsByTagName("body").item(0).getTextContent();
         } catch (Exception exc) {
@@ -91,15 +95,19 @@ public class SAMLWebBrowser extends Application implements ISubscriber, ISAMLWeb
         }
     }
 
-    private void CheckForErrors() {
+    private void checkForErrors() {
         checkForUrlQueryErrors();
-        if (hasErrors()) return;
+        if (hasErrors()) {
+            return;
+        }
         checkForBodyErrors();
     }
 
     private void checkForUrlQueryErrors() {
         String query = getQuery();
-        if (query == null || query.isEmpty() || !query.contains(ERROR_QUERY_KEY)) return;
+        if (query == null || query.isEmpty() || !query.contains(ERROR_QUERY_KEY)) {
+            return;
+        }
 
         String[] parameters = query.split("&");
 
@@ -145,7 +153,7 @@ public class SAMLWebBrowser extends Application implements ISubscriber, ISAMLWeb
         return ott != null && !ott.isEmpty();
     }
 
-    private void Exit() {
+    private void exit() {
         UUID callerKey = UUID.fromString(getParameters().getRaw().get(1));
         if (hasErrors())
             EventBus.publish(FAILURE_EVENT_NAME, callerKey, error);

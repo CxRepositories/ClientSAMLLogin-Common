@@ -7,15 +7,11 @@ import com.checkmarx.plugin.common.webbrowsering.SAMLWebBrowser;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         ICxServer server = new CxServer("http://localhost:1515/", "http://localhost:63325/");
         ISAMLWebBrowser saml = new SAMLWebBrowser();
-        CxSAMLConnector c = new CxSAMLConnector(server, saml, "SDK");
+        CxSAMLConnector connector = new CxSAMLConnector(server, saml, "SDK");
 
-        try {
-            System.out.println(c.Connect());
-        } catch (Exception exc) {
-            System.out.println(exc.getMessage());
-        }
+        System.out.println(connector.connect());
     }
 }

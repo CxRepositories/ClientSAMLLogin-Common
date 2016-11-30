@@ -18,7 +18,7 @@ public class CxSAMLConnector {
         this.clientName = clientName;
     }
 
-    public CxWSResponseLoginData Connect() throws Exception {
+    public CxWSResponseLoginData connect() throws Exception {
         String ott = samlWebBrowser.BrowseForOtt(cxServer.getRestURL() + SAML_LOGIN_RELATIVE_PATH, clientName);
         CxWSResponseLoginData loginResult = cxServer.LoginWithToken(ott);
         if (!loginResult.isIsSuccesfull())

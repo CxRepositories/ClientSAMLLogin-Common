@@ -13,8 +13,14 @@ public class Main {
         ISAMLWebBrowser saml = new SAMLWebBrowser();
         CxSAMLConnector connector = new CxSAMLConnector(server, saml, "SDK");
 
-        CxWSResponseLoginData connect = connector.connect();
+        try {
+            CxWSResponseLoginData connect = connector.connect();
+            System.out.println("SessionId: " + connect.getSessionId());
+        }
+        catch (Exception e)
+        {
+            System.out.println("Exception: " + e);
+        }
 
-        System.out.println("SessionId: " + connect.getSessionId());
     }
 }

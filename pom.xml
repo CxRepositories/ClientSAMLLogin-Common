@@ -41,6 +41,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <teamdev.version>4.9.2</teamdev.version>
+        <jsoup.version>1.7.3</jsoup.version>
     </properties>
 
     <dependencies>
@@ -78,6 +79,11 @@
             <groupId>teamdev.license</groupId>
             <artifactId>runtime</artifactId>
             <version>${teamdev.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>${jsoup.version}</version>
         </dependency>
     </dependencies>
 

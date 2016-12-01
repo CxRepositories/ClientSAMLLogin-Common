@@ -1,165 +1,89 @@
 package com.checkmarx.plugin.common.webbrowsering;
 
 
-import com.checkmarx.plugin.common.events.EventBus;
 import com.checkmarx.plugin.common.events.ISubscriber;
 import com.checkmarx.plugin.common.exception.SamlException;
-import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.concurrent.Worker;
-import javafx.scene.Scene;
-import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebView;
-import javafx.stage.Stage;
+import com.teamdev.jxbrowser.chromium.*;
 
-import java.net.URL;
-import java.util.List;
-import java.util.UUID;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.WindowEvent;
 
 /**
  * Created by eranb on 07/11/2016.
  */
-public class SAMLWebBrowser extends Application implements ISubscriber, ISAMLWebBrowser {
+public class SAMLWebBrowser extends JFrame implements ISubscriber, ISAMLWebBrowser {
 
-    private static final String ERROR_QUERY_KEY = "Error";
     private static final String SUCCESS_EVENT_NAME = "Success";
     private static final String FAILURE_EVENT_NAME = "Failure";
-    private WebEngine webEngine;
-    private String url;
-    private String content;
-    private String ott;
+    private static final String OTT = "?Ott=";
+
+
+    private final Object lock = new Object();
+    private String ott = null;
     private String error;
+    private Browser browser;
 
     @Override
-    public String BrowseForOtt(String samlURL, String clientName) throws SamlException {
-        UUID key = UUID.randomUUID();
-        EventBus.subscribe(key, this);
-        launch(getClass(), samlURL, key.toString(), clientName);
-        EventBus.unsubsribe(key);
-        if (hasErrors())
+    public String browseForOtt(String samlURL, String clientName) throws SamlException {
+        initBrowser(samlURL);
+        if (hasErrors()) {
             throw new SamlException(error);
+        }
         return ott;
     }
 
-    @Override
-    public void start(Stage stage) throws Exception {
-        List<String> params = getParameters().getRaw();
-        if (params.isEmpty()) {
-            return;
-        }
-
-        WebView browser = new WebView();
-        webEngine = browser.getEngine();
-        webEngine.setUserAgent(params.get(2));
-        webEngine.load(params.get(0));
-        webEngine.getLoadWorker().stateProperty().addListener(createChangeListener());
-        stage.setScene(new Scene(browser));
-        stage.show();
-    }
-
-    private ChangeListener<Worker.State> createChangeListener() {
-        return new ChangeListener<Worker.State>() {
+    private void initBrowser(String samlURL) {
+        JPanel contentPane = new JPanel(new GridLayout(1, 1));
+        browser = BrowserFactory.create();
+        browser.loadURL(samlURL);
+        contentPane.add(browser.getView().getComponent());
+        browser.setLoadHandler(new LoadHandler() {
             @Override
-            public void changed(ObservableValue ov, Worker.State oldState, Worker.State newState) {
-                if (newState == Worker.State.SUCCEEDED) {
-                    url = webEngine.getDocument().getDocumentURI();
-                    content = getDocumentBody();
-                    checkForErrors();
-                    if (!hasErrors())
-                        extractOtt();
-                } else if (newState == Worker.State.FAILED) {
-
-                    error = webEngine.getLoadWorker().getException().toString();
+            public boolean onLoad(LoadParams loadParams) {
+                String url = loadParams.getURL();
+                if (url.contains(OTT)) {
+                    int start = url.indexOf(OTT);
+                    ott = url.substring(start + OTT.length());
                 }
-
-                if (hasOtt() || hasErrors())
-                    exit();
+                if (ott != null) {
+                    synchronized (lock) {
+                        dispatchEvent(new WindowEvent(SAMLWebBrowser.this, WindowEvent.WINDOW_CLOSING));
+                        lock.notify();
+                        return true;
+                    }
+                }
+                return false;
             }
-        };
-    }
 
-    private void extractOtt() {
-        if (!url.toLowerCase().contains("samlacs")) {
-            return;
-        }
-        ott = content;
-    }
+            @Override
+            public boolean canNavigateOnBackspace() {
+                return false;
+            }
 
-    private String getDocumentBody() {
-        try {
-            return webEngine.getDocument().getElementsByTagName("body").item(0).getTextContent();
-        } catch (Exception exc) {
-            return "";
-        }
-    }
+            @Override
+            public boolean onCertificateError(CertificateErrorParams certificateErrorParams) {
+                return false;
+            }
+        });
+        setSize(700, 650);
+        setLocationRelativeTo(null);
+        getContentPane().add(contentPane, BorderLayout.CENTER);
+        setVisible(true);
 
-    private void checkForErrors() {
-        checkForUrlQueryErrors();
-        if (hasErrors()) {
-            return;
-        }
-        checkForBodyErrors();
-    }
 
-    private void checkForUrlQueryErrors() {
-        String query = getQuery();
-        if (query == null || query.isEmpty() || !query.contains(ERROR_QUERY_KEY)) {
-            return;
-        }
-
-        String[] parameters = query.split("&");
-
-        for (String param : parameters) {
-            if (param.contains(ERROR_QUERY_KEY)) {
-                String[] keyValue = param.split("=");
-                error = keyValue.length > 1 ? keyValue[1] : "Internal server error";
+        synchronized (lock) {
+            try {
+                lock.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
-    }
-
-    private String getQuery() {
-        try {
-            return new URL(url).getQuery();
-        } catch (Exception e) {
-            return "";
-        }
-
-    }
-
-
-    private void checkForBodyErrors() {
-        if (content.contains("HTTP 500")) {
-            error = "Internal server error";
-        }
-        if (hasErrors() || !content.contains("messageDetails")) {
-            return;
-        }
-        String[] contentComponents = content.split("\\r?\\n");
-        for (String component : contentComponents) {
-            if (component.contains("messageDetails")) {
-                error = component.split(":")[1];
-                break;
-            }
-        }
+        browser.dispose();
     }
 
     private boolean hasErrors() {
         return error != null && !error.isEmpty();
-    }
-
-    private boolean hasOtt() {
-        return ott != null && !ott.isEmpty();
-    }
-
-    private void exit() {
-        UUID callerKey = UUID.fromString(getParameters().getRaw().get(1));
-        if (hasErrors())
-            EventBus.publish(FAILURE_EVENT_NAME, callerKey, error);
-        if (hasOtt())
-            EventBus.publish(SUCCESS_EVENT_NAME, callerKey, ott);
-        Platform.exit();
     }
 
     @Override
@@ -170,4 +94,5 @@ public class SAMLWebBrowser extends Application implements ISubscriber, ISAMLWeb
             error = parameter;
         }
     }
+
 }

@@ -11,6 +11,22 @@
     <build>
         <plugins>
             <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.6.0</version>
@@ -24,6 +40,45 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <teamdev.version>4.9.2</teamdev.version>
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>teamdev</groupId>
+            <artifactId>jxbrowser</artifactId>
+            <version>${teamdev.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>teamdev</groupId>
+            <artifactId>jxbrowser-linux32</artifactId>
+            <version>${teamdev.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>teamdev</groupId>
+            <artifactId>jxbrowser-linux64</artifactId>
+            <version>${teamdev.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>teamdev</groupId>
+            <artifactId>jxbrowser-mac</artifactId>
+            <version>${teamdev.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>teamdev</groupId>
+            <artifactId>jxbrowser-win</artifactId>
+            <version>${teamdev.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>teamdev.license</groupId>
+            <artifactId>development</artifactId>
+            <version>${teamdev.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>teamdev.license</groupId>
+            <artifactId>runtime</artifactId>
+            <version>${teamdev.version}</version>
+        </dependency>
+    </dependencies>
 
 </project>

@@ -19,10 +19,11 @@ public class CxSAMLConnector {
     }
 
     public CxWSResponseLoginData connect() throws Exception {
-        String ott = samlWebBrowser.BrowseForOtt(cxServer.getRestURL() + SAML_LOGIN_RELATIVE_PATH, clientName);
+        String ott = samlWebBrowser.browseForOtt(cxServer.getRestURL() + SAML_LOGIN_RELATIVE_PATH, clientName);
         CxWSResponseLoginData loginResult = cxServer.LoginWithToken(ott);
-        if (!loginResult.isIsSuccesfull())
+        if (!loginResult.isIsSuccesfull()) {
             throw new SamlException(loginResult.getErrorMessage());
+        }
         return loginResult;
     }
 

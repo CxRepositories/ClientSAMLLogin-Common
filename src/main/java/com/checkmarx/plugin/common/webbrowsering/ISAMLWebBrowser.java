@@ -12,6 +12,6 @@ public interface ISAMLWebBrowser {
      * @return
      * @throws Exception
      */
-    String browseForOtt(String samlURL, String clientName) throws Exception;
+    AuthenticationData browseAuthenticationData(String samlURL, String clientName) throws Exception;
 
 }

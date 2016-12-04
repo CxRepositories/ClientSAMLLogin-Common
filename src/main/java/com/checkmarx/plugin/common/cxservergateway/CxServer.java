@@ -15,7 +15,7 @@ public class CxServer implements ICxServer {
 
     private static final QName SERVICE_NAME = new QName("http://Checkmarx.com/v7", "CxSDKWebService");
     private static URL WSDL_LOCATION = CxSDKWebService.class.getClassLoader().getResource("WEB-INF/CxSDKWebService.wsdl");
-    private static String PLUGIN_SDK = "Cxwebinterface/SDK/CxSDKWebService.asmx";
+    private static String PLUGIN_SDK = "/Cxwebinterface/SDK/CxSDKWebService.asmx";
     private final CxSDKWebServiceSoap client;
 
     String serverSoapUrl, serverRestURL;
@@ -34,7 +34,13 @@ public class CxServer implements ICxServer {
     }
 
     public CxWSResponseLoginData LoginWithToken(String ott) {
-        return client.loginWithToken(ott, 1033);
+        try {
+            return client.loginWithToken(ott, 1033);
+        } catch (Exception e) {
+            CxWSResponseLoginData response = new CxWSResponseLoginData();
+            response.setIsSuccesfull(false);
+            response.setErrorMessage(e.getMessage());
+            return response;
+        }
     }
-
 }

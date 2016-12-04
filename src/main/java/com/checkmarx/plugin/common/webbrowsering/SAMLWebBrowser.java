@@ -1,9 +1,7 @@
 package com.checkmarx.plugin.common.webbrowsering;
 
 import com.checkmarx.plugin.common.exception.SamlException;
-import com.teamdev.jxbrowser.chromium.Browser;
-import com.teamdev.jxbrowser.chromium.BrowserFactory;
-import com.teamdev.jxbrowser.chromium.BrowserPreferences;
+import com.teamdev.jxbrowser.chromium.*;
 import com.teamdev.jxbrowser.chromium.dom.DOMDocument;
 import com.teamdev.jxbrowser.chromium.events.FinishLoadingEvent;
 import com.teamdev.jxbrowser.chromium.events.LoadAdapter;
@@ -15,6 +13,8 @@ import java.awt.event.WindowEvent;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.*;
+import java.util.List;
 
 /**
  * Created by eranb on 07/11/2016.
@@ -23,19 +23,21 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
 
     private final Object lock = new Object();
     private String ott = null;
+    private Cookie CXRFCookie;
+    private Cookie CxCookie;
     private String error;
     private Browser browser;
     String clientName;
     JPanel contentPane;
 
     @Override
-    public String browseForOtt(String samlURL, String clientName) throws SamlException {
+    public AuthenticationData browseAuthenticationData(String samlURL, String clientName) throws SamlException {
         this.clientName = clientName;
         initBrowser(samlURL);
         if (hasErrors()) {
             throw new SamlException(error);
         }
-        return ott;
+        return new AuthenticationData(CXRFCookie, CxCookie, ott);
     }
 
     private void initBrowser(String samlURL) {
@@ -97,10 +99,23 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
             Browser browser = event.getBrowser();
             DOMDocument document = browser.getDocument();
             String html = document.getDocumentElement().getInnerHTML();
-            ott = extractOtt(html);
+            extractCxCoockies(browser.getCookieStorage().getAllCookies());
+            extractOtt(html);
             closeBrowser();
         }
     }
+
+    private void extractCxCoockies(List<Cookie> allCookies) {
+        for (int i=0; i<allCookies.size(); i++){
+            if (allCookies.get(i).getName().equals("CXCSRFToken")) {
+                CXRFCookie = allCookies.get(i);
+            }
+            if (allCookies.get(i).getName().equals("cxCookie")) {
+                CxCookie = allCookies.get(i);
+            }
+        }
+    }
+
 
     private void closeBrowser() {
         synchronized (lock) {
@@ -117,9 +132,9 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
         return event.getValidatedURL().contains("samlacs");
     }
 
-    private String extractOtt(String html) {
+    private void extractOtt(String html) {
         Document doc = Jsoup.parse(html);
-        return doc.body().text();
+        ott = doc.body().text();
     }
 
     private boolean hasErrors() {

@@ -129,7 +129,7 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
     }
 
     private boolean ottResponse(FinishLoadingEvent event) {
-        return event.getValidatedURL().contains("samlacs");
+        return event.getValidatedURL().toLowerCase().contains("samlacs");
     }
 
     private void extractOtt(String html) {

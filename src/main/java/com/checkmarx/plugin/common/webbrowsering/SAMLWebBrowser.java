@@ -1,10 +1,9 @@
 package com.checkmarx.plugin.common.webbrowsering;
-
+import com.checkmarx.plugin.common.exception.SamlOperationCancelException;
+import com.teamdev.jxbrowser.chromium.events.*;
 import com.checkmarx.plugin.common.exception.SamlException;
 import com.teamdev.jxbrowser.chromium.*;
 import com.teamdev.jxbrowser.chromium.dom.DOMDocument;
-import com.teamdev.jxbrowser.chromium.events.FinishLoadingEvent;
-import com.teamdev.jxbrowser.chromium.events.LoadAdapter;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import javax.swing.*;
@@ -15,6 +14,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
+import java.util.Timer;
 
 /**
  * Created by eranb on 07/11/2016.
@@ -27,6 +27,7 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
     private Cookie CxCookie;
     private String error;
     private Browser browser;
+    private AuthenticationData response;
     String clientName;
     JPanel contentPane;
 
@@ -37,6 +38,10 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
         if (hasErrors()) {
             throw new SamlException(error);
         }
+        if (response != null) {
+            return response;
+        }
+
         return new AuthenticationData(CXRFCookie, CxCookie, ott);
     }
 
@@ -47,6 +52,30 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
         browser.loadURL(samlURL);
         contentPane.add(browser.getView().getComponent());
         browser.addLoadListener(AddResponsesHandler());
+        TimerTask timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println("Visible: " + isVisible());
+                if (browser != null && !isVisible()) {
+                    browser.dispose();
+                    this.cancel();
+                    try {
+                        this.finalize();
+                    } catch (Throwable throwable) {
+                        throwable.printStackTrace();
+                    }
+
+                    response = new AuthenticationData(true);
+                }
+            }
+        };
+        Timer timer = new Timer();
+        timer.schedule(timerTask, 200, 200);
+        browser.addDisposeListener(new DisposeListener() {
+            public void onDisposed(DisposeEvent event) {
+                closeBrowser();
+            }
+        });
         setSize(700, 650);
         setLocationRelativeTo(null);
         getContentPane().add(contentPane, BorderLayout.CENTER);
@@ -63,6 +92,7 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
         browser.dispose();
     }
 
+
     private LoadAdapter AddResponsesHandler() {
         return new LoadAdapter() {
             @Override
@@ -70,6 +100,7 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
                 handleOttResponse(event);
                 handleErrorResponse(event);
             }
+
         };
     }
 

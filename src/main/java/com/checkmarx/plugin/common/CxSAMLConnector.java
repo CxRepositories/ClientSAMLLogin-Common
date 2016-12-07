@@ -22,6 +22,11 @@ public class CxSAMLConnector {
 
     public SAMLLoginData connect() throws Exception {
         AuthenticationData authenticationData = samlWebBrowser.browseAuthenticationData(cxServer.getRestURL() + SAML_LOGIN_RELATIVE_PATH, clientName);
+
+        if (authenticationData.wasCancled) {
+            return new SAMLLoginData(true);
+        }
+
         CxWSResponseLoginData loginResult = cxServer.LoginWithToken(authenticationData.Ott);
         if (!loginResult.isIsSuccesfull()) {
             throw new SamlException(loginResult.getErrorMessage());

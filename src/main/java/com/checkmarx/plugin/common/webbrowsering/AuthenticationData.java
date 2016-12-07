@@ -9,10 +9,15 @@ public class AuthenticationData {
     public Cookie CXRFCookie;
     public Cookie CxCookie;
     public String Ott;
+    public boolean wasCancled;
 
     public AuthenticationData(Cookie cxrfCookie, Cookie cxCookie, String ott) {
         CXRFCookie = cxrfCookie;
         CxCookie = cxCookie;
         Ott = ott;
+    }
+
+    public AuthenticationData(boolean wasCancled) {
+        this.wasCancled = wasCancled;
     }
 }

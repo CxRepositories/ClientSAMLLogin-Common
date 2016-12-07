@@ -10,11 +10,16 @@ public class SAMLLoginData {
     private CxWSResponseLoginData cxWSResponseLoginData;
     private Cookie CXRFCookie;
     private Cookie CxCookie;
+    public boolean wasCanceled;
 
     public SAMLLoginData(CxWSResponseLoginData cxWSResponseLoginData, Cookie cxrfCookie, Cookie cxCookie) {
         this.cxWSResponseLoginData = cxWSResponseLoginData;
         this.CXRFCookie = cxrfCookie;
         this.CxCookie = cxCookie;
+    }
+
+    public SAMLLoginData(boolean wasCanceled){
+        this.wasCanceled = wasCanceled;
     }
 
     public CxWSResponseLoginData getCxWSResponseLoginData(){

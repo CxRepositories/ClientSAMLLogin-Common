@@ -20,6 +20,7 @@ import java.awt.event.WindowEvent;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -51,6 +52,7 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
 
     private void initBrowser(String samlURL) {
         contentPane = new JPanel(new GridLayout(1, 1));
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         BrowserPreferences.setUserAgent(clientName);
         browser = BrowserFactory.create();
         browser.loadURL(samlURL);
@@ -92,43 +94,38 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
         return new LoadAdapter() {
             @Override
             public void onFinishLoadingFrame(FinishLoadingEvent event) {
-                handleOttResponse(event);
                 handleErrorResponse(event);
+                handleOttResponse(event);
+                if(hasOtt() || hasErrors())
+                    closePopup();
             }
 
         };
     }
 
+    private  boolean hasOtt()
+    {
+        return ott!= null && !ott.isEmpty();
+    }
     private void handleErrorResponse(FinishLoadingEvent event) {
-        if (event.isMainFrame() && (errorResponse(event))) {
-            try {
-                String queryStringParams = new URL(event.getValidatedURL()).getQuery();
-                String[] params = queryStringParams.split("&");
-                for (Integer i = 0; i < params.length; i++) {
-                    if (params[i].startsWith("Error")) {
-                        error = java.net.URLDecoder.decode(params[i].substring(6), "UTF-8");
-                        closePopup();
-                        break;
-                    }
-                }
+        if (event.isMainFrame()) {
 
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
+            checkForUrlQueryErrors(event);
+            if(!hasErrors())
+                checkForBodyErrors(event);
         }
+
+
     }
 
     private void handleOttResponse(FinishLoadingEvent event) {
-        if (event.isMainFrame() && (ottResponse(event))) {
+        if (event.isMainFrame() && (ottResponse(event)) && !hasErrors()) {
             Browser browser = event.getBrowser();
             DOMDocument document = browser.getDocument();
             String html = document.getDocumentElement().getInnerHTML();
             extractCxCoockies(browser.getCookieStorage().getAllCookies());
             extractOtt(html);
             response = new AuthenticationData(CXRFCookie, CxCookie, ott);
-            closePopup();
         }
     }
 
@@ -147,8 +144,66 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
         dispatchEvent(new WindowEvent(SAMLWebBrowser.this, WindowEvent.WINDOW_CLOSING));
     }
 
-    private boolean errorResponse(FinishLoadingEvent event) {
+    private void checkForUrlQueryErrors(FinishLoadingEvent event){
+        if(!isUrlErrorResponse(event) )return;
+
+
+        try {
+            String queryStringParams= new URL(event.getValidatedURL()).getQuery();
+            String[] params = queryStringParams.split("&");
+            for (Integer i=0; i< params.length; i++) {
+                if (params[i].startsWith("Error")) {
+                    error = java.net.URLDecoder.decode(params[i].substring(6), "UTF-8");
+                    break;
+                }
+            }
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean isUrlErrorResponse(FinishLoadingEvent event) {
         return event.getValidatedURL().contains("Error=");
+    }
+
+
+    private void checkForBodyErrors(FinishLoadingEvent event)
+    {
+        Browser browser = event.getBrowser();
+        DOMDocument document = browser.getDocument();
+        String content = document.getDocumentElement().getInnerHTML();
+
+        if(!isBodyErrorResponse(content)) return;
+        handleInternalServerError(content);
+
+        if(hasErrors() || !content.contains("messageDetails")) return;
+        extractMessageErrorFromBody(content);
+    }
+
+    private void handleInternalServerError(String content)
+    {
+        if(content.contains("HTTP 500"))
+        {
+            error="Internal server error";
+        }
+    }
+
+    private void extractMessageErrorFromBody(String content)
+    {
+        String [] contentComponents = content.split("\\r?\\n");
+        for (String component:contentComponents)
+        {
+            if(component.contains("messageDetails")) {
+                error = component.split(":")[1];
+                break;
+            }
+        }
+    }
+    private boolean isBodyErrorResponse(String content){
+
+        return content.toLowerCase().contains("messagecode");
     }
 
     private boolean ottResponse(FinishLoadingEvent event) {

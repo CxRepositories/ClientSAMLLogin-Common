@@ -1,6 +1,7 @@
 package com.checkmarx.plugin.common.webbrowsering;
 
 import com.checkmarx.plugin.common.exception.SamlException;
+import com.sun.deploy.util.StringUtils;
 import com.teamdev.jxbrowser.chromium.Browser;
 import com.teamdev.jxbrowser.chromium.BrowserFactory;
 import com.teamdev.jxbrowser.chromium.BrowserPreferences;
@@ -196,11 +197,20 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
         for (String component:contentComponents)
         {
             if(component.contains("messageDetails")) {
-                error = component.split(":")[1];
+                error= component.split(":")[1].trim();
+               TrimError();
                 break;
             }
         }
     }
+
+    private void TrimError() {
+        if(error.startsWith("\""))
+            error = error.substring(1);
+        if(error.endsWith("\""))
+            error = error.substring(0,error.length()-1);
+    }
+
     private boolean isBodyErrorResponse(String content){
 
         return content.toLowerCase().contains("messagecode");

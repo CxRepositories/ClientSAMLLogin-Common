@@ -1,14 +1,11 @@
 package com.checkmarx.plugin.common.webbrowsering;
 
 import com.checkmarx.plugin.common.exception.SamlException;
-import com.sun.deploy.util.StringUtils;
 import com.teamdev.jxbrowser.chromium.Browser;
 import com.teamdev.jxbrowser.chromium.BrowserFactory;
 import com.teamdev.jxbrowser.chromium.BrowserPreferences;
 import com.teamdev.jxbrowser.chromium.Cookie;
 import com.teamdev.jxbrowser.chromium.dom.DOMDocument;
-import com.teamdev.jxbrowser.chromium.events.DisposeEvent;
-import com.teamdev.jxbrowser.chromium.events.DisposeListener;
 import com.teamdev.jxbrowser.chromium.events.FinishLoadingEvent;
 import com.teamdev.jxbrowser.chromium.events.LoadAdapter;
 import org.jsoup.Jsoup;
@@ -21,7 +18,6 @@ import java.awt.event.WindowEvent;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
 import java.util.List;
 
 /**
@@ -54,7 +50,7 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
     private void initBrowser(String samlURL) {
         contentPane = new JPanel(new GridLayout(1, 1));
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        BrowserPreferences.setUserAgent(clientName);
+        BrowserPreferences.setUserAgent("Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.52 Safari/537.36; " + clientName);
         browser = BrowserFactory.create();
         browser.loadURL(samlURL);
         contentPane.add(browser.getView().getComponent());

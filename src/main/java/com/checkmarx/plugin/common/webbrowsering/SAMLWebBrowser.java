@@ -1,10 +1,7 @@
 package com.checkmarx.plugin.common.webbrowsering;
 
 import com.checkmarx.plugin.common.exception.SamlException;
-import com.teamdev.jxbrowser.chromium.Browser;
-import com.teamdev.jxbrowser.chromium.BrowserFactory;
-import com.teamdev.jxbrowser.chromium.BrowserPreferences;
-import com.teamdev.jxbrowser.chromium.Cookie;
+import com.teamdev.jxbrowser.chromium.*;
 import com.teamdev.jxbrowser.chromium.dom.DOMDocument;
 import com.teamdev.jxbrowser.chromium.events.FinishLoadingEvent;
 import com.teamdev.jxbrowser.chromium.events.LoadAdapter;
@@ -50,7 +47,13 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
     private void initBrowser(String samlURL) {
         contentPane = new JPanel(new GridLayout(1, 1));
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        BrowserPreferences.setUserAgent("Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.52 Safari/537.36; " + clientName);
+        BrowserContext browserContext = BrowserContext.defaultContext();
+        browserContext.setNetworkDelegate(new DefaultNetworkDelegate() {
+            @Override
+            public void onBeforeSendHeaders(BeforeSendHeadersParams params) {
+                params.getHeaders().setHeader("cxOrigin", clientName);
+            }
+        });
         browser = BrowserFactory.create();
         browser.loadURL(samlURL);
         contentPane.add(browser.getView().getComponent());

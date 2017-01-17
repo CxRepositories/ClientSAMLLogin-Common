@@ -5,6 +5,8 @@ import com.teamdev.jxbrowser.chromium.*;
 import com.teamdev.jxbrowser.chromium.dom.DOMDocument;
 import com.teamdev.jxbrowser.chromium.events.FinishLoadingEvent;
 import com.teamdev.jxbrowser.chromium.events.LoadAdapter;
+import com.teamdev.jxbrowser.chromium.swing.BrowserView;
+import com.teamdev.jxbrowser.chromium.swing.DefaultNetworkDelegate;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -48,15 +50,15 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
         contentPane = new JPanel(new GridLayout(1, 1));
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         BrowserContext browserContext = BrowserContext.defaultContext();
-        browserContext.setNetworkDelegate(new DefaultNetworkDelegate() {
+        browserContext.getNetworkService().setNetworkDelegate(new DefaultNetworkDelegate() {
             @Override
             public void onBeforeSendHeaders(BeforeSendHeadersParams params) {
                 params.getHeaders().setHeader("cxOrigin", clientName);
             }
         });
-        browser = BrowserFactory.create();
+        browser = new Browser(browserContext);
         browser.loadURL(samlURL);
-        contentPane.add(browser.getView().getComponent());
+        contentPane.add(new BrowserView(browser));
         browser.addLoadListener(AddResponsesHandler());
         setSize(700, 650);
         setLocationRelativeTo(null);

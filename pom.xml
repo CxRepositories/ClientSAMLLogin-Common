@@ -7,13 +7,7 @@
     <artifactId>client-saml-login</artifactId>
     <name>Client-SAML-Login</name>
     <version>1.0.0-SNAPSHOT</version>
-
-    <repositories>
-        <repository>
-            <id>com.teamdev</id>
-            <url>http://maven.teamdev.com/repository/products</url>
-        </repository>
-    </repositories>
+    
     <build>
         <plugins>
             <plugin>

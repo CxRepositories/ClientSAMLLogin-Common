@@ -6,7 +6,7 @@
     <groupId>com.checkmarx.plugin.common</groupId>
     <artifactId>client-saml-login</artifactId>
     <name>Client-SAML-Login</name>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 
     <build>
         <plugins>

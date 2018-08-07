@@ -1,3 +1,4 @@
+/*
 package com.checkmarx.plugin.common;
 
 import com.checkmarx.plugin.common.cxservergateway.CxServer;
@@ -9,7 +10,7 @@ import com.checkmarx.plugin.common.webbrowsering.SAMLWebBrowser;
 public class Main {
 
     public static void main(String[] args) throws Exception {
-        ICxServer server = new CxServer("http://10.31.2.118", "http://10.31.2.118");
+        ICxServer server = new CxServer("", "");
         ISAMLWebBrowser saml = new SAMLWebBrowser();
         CxSAMLConnector connector = new CxSAMLConnector(server, saml, "cx-SDK");
 
@@ -31,3 +32,4 @@ public class Main {
 
     }
 }
+*/

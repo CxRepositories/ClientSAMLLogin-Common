@@ -13,6 +13,7 @@ import java.net.URL;
  * Created by ehuds on 3/9/2017.
  */
 public class CxSamlClientImpl implements CxSamlClient {
+
     URL serverUrl;
     String clientName;
 
@@ -26,6 +27,7 @@ public class CxSamlClientImpl implements CxSamlClient {
         ICxServer server = new CxServer(serverUrl.toString(), serverUrl.toString());
         ISAMLWebBrowser saml = new SAMLWebBrowser();
         CxSAMLConnector connector = new CxSAMLConnector(server, saml, clientName);
-            return connector.connect();
+        return connector.connect();
     }
+
 }

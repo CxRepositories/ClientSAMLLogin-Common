@@ -5,6 +5,7 @@ import com.teamdev.jxbrowser.chromium.*;
 import com.teamdev.jxbrowser.chromium.dom.DOMDocument;
 import com.teamdev.jxbrowser.chromium.events.FinishLoadingEvent;
 import com.teamdev.jxbrowser.chromium.events.LoadAdapter;
+import com.teamdev.jxbrowser.chromium.internal.Environment;
 import com.teamdev.jxbrowser.chromium.swing.BrowserView;
 import com.teamdev.jxbrowser.chromium.swing.DefaultNetworkDelegate;
 import org.jsoup.Jsoup;
@@ -47,6 +48,13 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
     }
 
     private void initBrowser(String samlURL) {
+        if (Environment.isMac()) {
+            System.setProperty("java.ipc.external", "true");
+            if (!BrowserCore.isInitialized()) {
+                BrowserCore.initialize();
+            }
+        }
+
         contentPane = new JPanel(new GridLayout(1, 1));
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         BrowserContext browserContext = BrowserContext.defaultContext();
@@ -98,26 +106,24 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
             public void onFinishLoadingFrame(FinishLoadingEvent event) {
                 handleErrorResponse(event);
                 handleOttResponse(event);
-                if(hasOtt() || hasErrors())
+                if (hasOtt() || hasErrors())
                     closePopup();
             }
 
         };
     }
 
-    private  boolean hasOtt()
-    {
-        return ott!= null && !ott.isEmpty();
+    private boolean hasOtt() {
+        return ott != null && !ott.isEmpty();
     }
+
     private void handleErrorResponse(FinishLoadingEvent event) {
         if (event.isMainFrame()) {
 
             checkForUrlQueryErrors(event);
-            if(!hasErrors())
+            if (!hasErrors())
                 checkForBodyErrors(event);
         }
-
-
     }
 
     private void handleOttResponse(FinishLoadingEvent event) {
@@ -146,14 +152,13 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
         dispatchEvent(new WindowEvent(SAMLWebBrowser.this, WindowEvent.WINDOW_CLOSING));
     }
 
-    private void checkForUrlQueryErrors(FinishLoadingEvent event){
-        if(!isUrlErrorResponse(event) )return;
-
+    private void checkForUrlQueryErrors(FinishLoadingEvent event) {
+        if (!isUrlErrorResponse(event)) return;
 
         try {
-            String queryStringParams= new URL(event.getValidatedURL()).getQuery();
+            String queryStringParams = new URL(event.getValidatedURL()).getQuery();
             String[] params = queryStringParams.split("&");
-            for (Integer i=0; i< params.length; i++) {
+            for (Integer i = 0; i < params.length; i++) {
                 if (params[i].startsWith("Error")) {
                     error = java.net.URLDecoder.decode(params[i].substring(6), "UTF-8");
                     break;
@@ -170,49 +175,43 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
         return event.getValidatedURL().contains("Error=");
     }
 
-
-    private void checkForBodyErrors(FinishLoadingEvent event)
-    {
+    private void checkForBodyErrors(FinishLoadingEvent event) {
         Browser browser = event.getBrowser();
         DOMDocument document = browser.getDocument();
         String content = document.getDocumentElement().getInnerHTML();
 
-        if(!isBodyErrorResponse(content)) return;
+        if (!isBodyErrorResponse(content)) return;
         handleInternalServerError(content);
 
-        if(hasErrors() || !content.contains("messageDetails")) return;
+        if (hasErrors() || !content.contains("messageDetails")) return;
         extractMessageErrorFromBody(content);
     }
 
-    private void handleInternalServerError(String content)
-    {
-        if(content.contains("HTTP 500"))
-        {
-            error="Internal server error";
+    private void handleInternalServerError(String content) {
+        if (content.contains("HTTP 500")) {
+            error = "Internal server error";
         }
     }
 
-    private void extractMessageErrorFromBody(String content)
-    {
-        String [] contentComponents = content.split("\\r?\\n");
-        for (String component:contentComponents)
-        {
-            if(component.contains("messageDetails")) {
-                error= component.split(":")[1].trim();
-               TrimError();
+    private void extractMessageErrorFromBody(String content) {
+        String[] contentComponents = content.split("\\r?\\n");
+        for (String component : contentComponents) {
+            if (component.contains("messageDetails")) {
+                error = component.split(":")[1].trim();
+                TrimError();
                 break;
             }
         }
     }
 
     private void TrimError() {
-        if(error.startsWith("\""))
+        if (error.startsWith("\""))
             error = error.substring(1);
-        if(error.endsWith("\""))
-            error = error.substring(0,error.length()-1);
+        if (error.endsWith("\""))
+            error = error.substring(0, error.length() - 1);
     }
 
-    private boolean isBodyErrorResponse(String content){
+    private boolean isBodyErrorResponse(String content) {
 
         return content.toLowerCase().contains("messagecode");
     }
@@ -229,6 +228,5 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
     private boolean hasErrors() {
         return error != null && !error.isEmpty();
     }
-
 
 }

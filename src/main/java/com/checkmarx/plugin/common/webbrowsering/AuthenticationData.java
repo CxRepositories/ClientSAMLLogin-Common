@@ -6,6 +6,7 @@ import com.teamdev.jxbrowser.chromium.Cookie;
  * Created by ehuds on 12/4/2016.
  */
 public class AuthenticationData {
+
     public Cookie CXRFCookie;
     public Cookie CxCookie;
     public String Ott;
@@ -20,4 +21,5 @@ public class AuthenticationData {
     public AuthenticationData(boolean wasCancled) {
         this.wasCancled = wasCancled;
     }
+
 }

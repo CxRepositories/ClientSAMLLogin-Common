@@ -6,7 +6,6 @@ package com.checkmarx.plugin.common.webbrowsering;
 public interface ISAMLWebBrowser {
 
     /**
-     *
      * @param samlURL
      * @param clientName
      * @return

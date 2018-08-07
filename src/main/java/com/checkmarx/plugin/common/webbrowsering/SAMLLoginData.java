@@ -7,10 +7,11 @@ import com.teamdev.jxbrowser.chromium.Cookie;
  * Created by ehuds on 12/4/2016.
  */
 public class SAMLLoginData {
+
     private CxWSResponseLoginData cxWSResponseLoginData;
     private Cookie CXRFCookie;
     private Cookie CxCookie;
-    public boolean wasCanceled;
+    private boolean wasCanceled;
 
     public SAMLLoginData(CxWSResponseLoginData cxWSResponseLoginData, Cookie cxrfCookie, Cookie cxCookie) {
         this.cxWSResponseLoginData = cxWSResponseLoginData;
@@ -18,11 +19,11 @@ public class SAMLLoginData {
         this.CxCookie = cxCookie;
     }
 
-    public SAMLLoginData(boolean wasCanceled){
+    public SAMLLoginData(boolean wasCanceled) {
         this.wasCanceled = wasCanceled;
     }
 
-    public CxWSResponseLoginData getCxWSResponseLoginData(){
+    public CxWSResponseLoginData getCxWSResponseLoginData() {
         return this.cxWSResponseLoginData;
     }
 
@@ -33,4 +34,5 @@ public class SAMLLoginData {
     public Cookie getCxCookie() {
         return this.CxCookie;
     }
+
 }

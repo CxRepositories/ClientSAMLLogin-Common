@@ -35,4 +35,8 @@ public class SAMLLoginData {
         return this.CxCookie;
     }
 
+    public boolean wasCanceled() {
+        return wasCanceled;
+    }
+
 }

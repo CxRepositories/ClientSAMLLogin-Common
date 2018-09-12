@@ -55,23 +55,16 @@
     <dependencies>
         <dependency>
             <groupId>com.teamdev.jxbrowser</groupId>
-            <artifactId>jxbrowser-linux64</artifactId>
+            <artifactId>jxbrowser-cross-platform</artifactId>
             <version>${teamdev.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.teamdev.jxbrowser</groupId>
-            <artifactId>jxbrowser-mac</artifactId>
-            <version>${teamdev.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.teamdev.jxbrowser</groupId>
-            <artifactId>jxbrowser-win64</artifactId>
-            <version>${teamdev.version}</version>
+            <type>pom</type>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>teamdev.license</groupId>
             <artifactId>runtime</artifactId>
             <version>${teamdev.license.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.jsoup</groupId>

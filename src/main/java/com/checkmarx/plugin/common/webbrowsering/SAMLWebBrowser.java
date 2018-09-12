@@ -35,6 +35,11 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
     String clientName;
     JPanel contentPane;
 
+    static {
+        System.setProperty("jxbrowser.ipc.external", "true");
+        System.setProperty("java.ipc.external", "true");
+    }
+
     @Override
     public AuthenticationData browseAuthenticationData(String samlURL, String clientName) throws SamlException {
         this.clientName = clientName;
@@ -49,7 +54,6 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
 
     private void initBrowser(String samlURL) {
         if (Environment.isMac()) {
-            System.setProperty("java.ipc.external", "true");
             if (!BrowserCore.isInitialized()) {
                 BrowserCore.initialize();
             }

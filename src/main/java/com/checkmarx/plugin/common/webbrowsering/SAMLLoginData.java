@@ -1,7 +1,7 @@
 package com.checkmarx.plugin.common.webbrowsering;
 
 import com.checkmarx.plugin.common.sdk.CxWSResponseLoginData;
-import com.teamdev.jxbrowser.chromium.Cookie;
+import com.teamdev.jxbrowser.cookie.Cookie;
 
 /**
  * Created by ehuds on 12/4/2016.

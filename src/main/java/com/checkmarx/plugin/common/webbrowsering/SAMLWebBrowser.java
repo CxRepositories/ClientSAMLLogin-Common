@@ -1,13 +1,17 @@
 package com.checkmarx.plugin.common.webbrowsering;
 
 import com.checkmarx.plugin.common.exception.SamlException;
-import com.teamdev.jxbrowser.chromium.*;
-import com.teamdev.jxbrowser.chromium.dom.DOMDocument;
-import com.teamdev.jxbrowser.chromium.events.FinishLoadingEvent;
-import com.teamdev.jxbrowser.chromium.events.LoadAdapter;
-import com.teamdev.jxbrowser.chromium.internal.Environment;
-import com.teamdev.jxbrowser.chromium.swing.BrowserView;
-import com.teamdev.jxbrowser.chromium.swing.DefaultNetworkDelegate;
+import com.teamdev.jxbrowser.browser.Browser;
+import com.teamdev.jxbrowser.cookie.Cookie;
+import com.teamdev.jxbrowser.engine.Engine;
+import com.teamdev.jxbrowser.engine.EngineOptions;
+import com.teamdev.jxbrowser.engine.RenderingMode;
+import com.teamdev.jxbrowser.event.Observer;
+import com.teamdev.jxbrowser.navigation.event.FrameLoadFinished;
+import com.teamdev.jxbrowser.net.HttpHeader;
+import com.teamdev.jxbrowser.net.callback.BeforeSendHeadersCallback;
+import com.teamdev.jxbrowser.os.Environment;
+import com.teamdev.jxbrowser.view.swing.BrowserView;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -18,7 +22,11 @@ import java.awt.event.WindowEvent;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
+import static com.checkmarx.plugin.common.configuration.PropertiesLoader.getLicenseKey;
 
 /**
  * Created by eranb on 07/11/2016.
@@ -54,31 +62,37 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
 
     private void initBrowser(String samlURL) {
         if (Environment.isMac()) {
-            if (!BrowserCore.isInitialized()) {
+           /* if (!BrowserCore.isInitialized()) {
                 BrowserCore.initialize();
-            }
+            }*/
         }
 
         contentPane = new JPanel(new GridLayout(1, 1));
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        BrowserContext browserContext = BrowserContext.defaultContext();
-        browserContext.getNetworkService().setNetworkDelegate(new DefaultNetworkDelegate() {
-            @Override
-            public void onBeforeSendHeaders(BeforeSendHeadersParams params) {
-                params.getHeaders().setHeader("cxOrigin", clientName);
-            }
+        Engine engine = Engine.newInstance(EngineOptions
+                .newBuilder(RenderingMode.HARDWARE_ACCELERATED)
+                .licenseKey(getLicenseKey())
+                .build());
+
+        engine.network().set(BeforeSendHeadersCallback.class, params -> {
+            List<HttpHeader> httpHeaders = new ArrayList<>(params.httpHeaders());
+            httpHeaders.add(HttpHeader.of("cxOrigin",clientName));
+            return BeforeSendHeadersCallback.Response.override(httpHeaders);
         });
-        browser = new Browser(browserContext);
-        browser.loadURL(samlURL);
-        contentPane.add(new BrowserView(browser));
-        browser.addLoadListener(AddResponsesHandler());
+
+
+        browser = engine.newBrowser();
+        browser.navigation().loadUrl(samlURL);
+        contentPane.add(BrowserView.newInstance(browser));
+        browser.navigation()
+                .on(FrameLoadFinished.class, AddResponsesHandler());
         setSize(700, 650);
         setLocationRelativeTo(null);
         getContentPane().add(contentPane, BorderLayout.CENTER);
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                browser.dispose();
+                browser.close();
                 if (response == null) {
                     response = new AuthenticationData(true);
                 }
@@ -104,16 +118,12 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
         }
     }
 
-    private LoadAdapter AddResponsesHandler() {
-        return new LoadAdapter() {
-            @Override
-            public void onFinishLoadingFrame(FinishLoadingEvent event) {
-                handleErrorResponse(event);
-                handleOttResponse(event);
+    private Observer<FrameLoadFinished> AddResponsesHandler() {
+        return param -> {
+                handleErrorResponse(param);
+                handleOttResponse(param);
                 if (hasOtt() || hasErrors())
                     closePopup();
-            }
-
         };
     }
 
@@ -121,8 +131,8 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
         return ott != null && !ott.isEmpty();
     }
 
-    private void handleErrorResponse(FinishLoadingEvent event) {
-        if (event.isMainFrame()) {
+    private void handleErrorResponse(FrameLoadFinished event) {
+        if (event.frame().isMain()) {
 
             checkForUrlQueryErrors(event);
             if (!hasErrors())
@@ -130,37 +140,42 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
         }
     }
 
-    private void handleOttResponse(FinishLoadingEvent event) {
-        if (event.isMainFrame() && (ottResponse(event)) && !hasErrors()) {
-            Browser browser = event.getBrowser();
-            DOMDocument document = browser.getDocument();
-            String html = document.getDocumentElement().getInnerHTML();
-            extractCxCoockies(browser.getCookieStorage().getAllCookies());
-            extractOtt(html);
+    private void handleOttResponse(FrameLoadFinished event) {
+        if (event.frame().isMain() && (ottResponse(event)) && !hasErrors()) {
+            Optional<com.teamdev.jxbrowser.dom.Document> document = event.frame().document();
+            document.ifPresent(doc -> {
+                String html = doc.documentElement().get().innerHtml();
+                extractCxCoockies(browser.engine().cookieStore().cookies());
+                extractOtt(html);
+            });
+
             response = new AuthenticationData(CXRFCookie, CxCookie, ott);
         }
     }
 
     private void extractCxCoockies(List<Cookie> allCookies) {
-        for (int i = 0; i < allCookies.size(); i++) {
-            if (allCookies.get(i).getName().equals("CXCSRFToken")) {
-                CXRFCookie = allCookies.get(i);
-            }
-            if (allCookies.get(i).getName().equals("cxCookie")) {
-                CxCookie = allCookies.get(i);
-            }
-        }
+        CXRFCookie = allCookies.
+                stream()
+                .filter( cookie -> "CXCSRFToken".equalsIgnoreCase(cookie.name()))
+                .findAny()
+                .orElse(null);
+
+        CxCookie = allCookies.
+                stream()
+                .filter( cookie -> "cxCookie".equalsIgnoreCase(cookie.name()))
+                .findAny()
+                .orElse(null);
     }
 
     private void closePopup() {
         dispatchEvent(new WindowEvent(SAMLWebBrowser.this, WindowEvent.WINDOW_CLOSING));
     }
 
-    private void checkForUrlQueryErrors(FinishLoadingEvent event) {
+    private void checkForUrlQueryErrors(FrameLoadFinished event) {
         if (!isUrlErrorResponse(event)) return;
 
         try {
-            String queryStringParams = new URL(event.getValidatedURL()).getQuery();
+            String queryStringParams = new URL(event.url()).getQuery();
             String[] params = queryStringParams.split("&");
             for (Integer i = 0; i < params.length; i++) {
                 if (params[i].startsWith("Error")) {
@@ -175,20 +190,21 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
         }
     }
 
-    private boolean isUrlErrorResponse(FinishLoadingEvent event) {
-        return event.getValidatedURL().contains("Error=");
+    private boolean isUrlErrorResponse(FrameLoadFinished event) {
+        return event.url().contains("Error=");
     }
 
-    private void checkForBodyErrors(FinishLoadingEvent event) {
-        Browser browser = event.getBrowser();
-        DOMDocument document = browser.getDocument();
-        String content = document.getDocumentElement().getInnerHTML();
+    private void checkForBodyErrors(FrameLoadFinished event) {
+        event.frame().document().ifPresent( doc -> {
+            String content = doc.documentElement().get().innerHtml();
 
-        if (!isBodyErrorResponse(content)) return;
-        handleInternalServerError(content);
+            if (!isBodyErrorResponse(content)) return;
+            handleInternalServerError(content);
 
-        if (hasErrors() || !content.contains("messageDetails")) return;
-        extractMessageErrorFromBody(content);
+            if (hasErrors() || !content.contains("messageDetails")) return;
+            extractMessageErrorFromBody(content);
+        });
+
     }
 
     private void handleInternalServerError(String content) {
@@ -220,8 +236,8 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
         return content.toLowerCase().contains("messagecode");
     }
 
-    private boolean ottResponse(FinishLoadingEvent event) {
-        return event.getValidatedURL().toLowerCase().contains("samlacs");
+    private boolean ottResponse(FrameLoadFinished event) {
+        return event.url().toLowerCase().contains("samlacs");
     }
 
     private void extractOtt(String html) {

@@ -26,8 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static com.checkmarx.plugin.common.configuration.PropertiesLoader.getLicenseKey;
-
 /**
  * Created by eranb on 07/11/2016.
  */
@@ -71,7 +69,6 @@ public class SAMLWebBrowser extends JFrame implements ISAMLWebBrowser {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         Engine engine = Engine.newInstance(EngineOptions
                 .newBuilder(RenderingMode.HARDWARE_ACCELERATED)
-                .licenseKey(getLicenseKey())
                 .build());
 
         engine.network().set(BeforeSendHeadersCallback.class, params -> {

@@ -10,28 +10,24 @@ import com.checkmarx.plugin.common.webbrowsering.SAMLLoginData;
 public class CxSAMLConnector {
 
     private static final String SAML_LOGIN_RELATIVE_PATH = "/cxrestapi/auth/samlLogin";
-    ICxServer cxServer;
+    String cxServer;
     String clientName;
     ISAMLWebBrowser samlWebBrowser;
 
-    public CxSAMLConnector(ICxServer cxServer, ISAMLWebBrowser samlWebBrowser, String clientName) {
+    public CxSAMLConnector(String cxServer, ISAMLWebBrowser samlWebBrowser, String clientName) {
         this.cxServer = cxServer;
         this.samlWebBrowser = samlWebBrowser;
         this.clientName = clientName;
     }
 
     public SAMLLoginData connect() throws Exception {
-        AuthenticationData authenticationData = samlWebBrowser.browseAuthenticationData(cxServer.getRestURL() + SAML_LOGIN_RELATIVE_PATH, clientName);
+        AuthenticationData authenticationData = samlWebBrowser.browseAuthenticationData(cxServer + SAML_LOGIN_RELATIVE_PATH, clientName);
 
         if (authenticationData.wasCancled) {
             return new SAMLLoginData(true);
         }
 
-        CxWSResponseLoginData loginResult = cxServer.LoginWithToken(authenticationData.Ott);
-        if (!loginResult.isIsSuccesfull()) {
-            throw new SamlException(loginResult.getErrorMessage());
-        }
-        return new SAMLLoginData(loginResult, authenticationData.CXRFCookie, authenticationData.CxCookie);
+        return new SAMLLoginData(authenticationData.CXRFCookie, authenticationData.CxCookie);
     }
 
 }

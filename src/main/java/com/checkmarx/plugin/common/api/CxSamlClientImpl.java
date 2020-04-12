@@ -26,7 +26,7 @@ public class CxSamlClientImpl implements CxSamlClient {
     public SAMLLoginData login() throws Exception {
         ICxServer server = new CxServer(serverUrl.toString(), serverUrl.toString());
         ISAMLWebBrowser saml = new SAMLWebBrowser();
-        CxSAMLConnector connector = new CxSAMLConnector(server, saml, clientName);
+        CxSAMLConnector connector = new CxSAMLConnector(serverUrl.toString(), saml, clientName);
         return connector.connect();
     }
 

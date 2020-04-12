@@ -8,23 +8,17 @@ import com.teamdev.jxbrowser.cookie.Cookie;
  */
 public class SAMLLoginData {
 
-    private CxWSResponseLoginData cxWSResponseLoginData;
     private Cookie CXRFCookie;
     private Cookie CxCookie;
     private boolean wasCanceled;
 
-    public SAMLLoginData(CxWSResponseLoginData cxWSResponseLoginData, Cookie cxrfCookie, Cookie cxCookie) {
-        this.cxWSResponseLoginData = cxWSResponseLoginData;
+    public SAMLLoginData(Cookie cxrfCookie, Cookie cxCookie) {
         this.CXRFCookie = cxrfCookie;
         this.CxCookie = cxCookie;
     }
 
     public SAMLLoginData(boolean wasCanceled) {
         this.wasCanceled = wasCanceled;
-    }
-
-    public CxWSResponseLoginData getCxWSResponseLoginData() {
-        return this.cxWSResponseLoginData;
     }
 
     public Cookie getCXRFCookie() {

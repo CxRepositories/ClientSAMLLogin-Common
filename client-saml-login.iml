@@ -10,13 +10,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Maven: teamdev:jxbrowser:4.9.2" level="project" />
-    <orderEntry type="library" name="Maven: teamdev:jxbrowser-linux32:4.9.2" level="project" />
-    <orderEntry type="library" name="Maven: teamdev:jxbrowser-linux64:4.9.2" level="project" />
-    <orderEntry type="library" name="Maven: teamdev:jxbrowser-mac:4.9.2" level="project" />
-    <orderEntry type="library" name="Maven: teamdev:jxbrowser-win:4.9.2" level="project" />
-    <orderEntry type="library" name="Maven: teamdev.license:development:4.9.2" level="project" />
-    <orderEntry type="library" name="Maven: teamdev.license:runtime:4.9.2" level="project" />
     <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.24" level="project" />
     <orderEntry type="library" name="Maven: org.slf4j:slf4j-log4j12:1.7.24" level="project" />
     <orderEntry type="library" name="Maven: log4j:log4j:1.2.17" level="project" />
